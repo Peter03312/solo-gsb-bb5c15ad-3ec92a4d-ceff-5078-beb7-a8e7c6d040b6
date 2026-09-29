@@ -53,6 +53,50 @@ describe('重新校准迁移弹窗', () => {
     expect(html).toContain('取消计算（保留旧工作区）');
   });
 
+  it('busy 时文案使用发起预览时冻结的校准参数（锚点数取请求快照而非实时草稿）', () => {
+    const html = renderToString(
+      <RecalibrateMigrateDialog
+        open
+        busy
+        error={null}
+        oldGroupCount={0}
+        newGroups={null}
+        newCuesA={[]}
+        newCuesB={[]}
+        plan={null}
+        calibrated
+        anchorCount={7}
+        onClose={noop}
+        onRetry={noop}
+        onConfirm={noop}
+      />,
+    );
+    expect(html).toContain('按新校准（7 个锚点）');
+    expect(html).not.toContain('按原始 B 时间');
+  });
+
+  it('发起预览时选择原始 B 时间，busy 文案即显示未校准（即使工作区当前已校准）', () => {
+    const html = renderToString(
+      <RecalibrateMigrateDialog
+        open
+        busy
+        error={null}
+        oldGroupCount={0}
+        newGroups={null}
+        newCuesA={[]}
+        newCuesB={[]}
+        plan={null}
+        calibrated={false}
+        anchorCount={0}
+        onClose={noop}
+        onRetry={noop}
+        onConfirm={noop}
+      />,
+    );
+    expect(html).toContain('按原始 B 时间');
+    expect(html).not.toContain('按新校准');
+  });
+
   it('Worker 失败时展示原因、提供重新计算，确认按钮禁用', () => {
     const html = renderToString(
       <RecalibrateMigrateDialog
@@ -74,6 +118,8 @@ describe('重新校准迁移弹窗', () => {
     expect(html).toContain('迁移预览计算失败');
     expect(html).toContain('worker crashed');
     expect(html).toContain('旧工作区保持原样');
+    // 失败态仍用发起时冻结的参数描述本次预览，重试沿用同一参数
+    expect(html).toContain('按新校准（4 个锚点）');
     expect(html).toContain('重新计算');
     expect(html).toMatch(/<button[^>]*disabled[^>]*>\s*确认并一次提交/);
   });
@@ -102,6 +148,7 @@ describe('重新校准迁移弹窗', () => {
       />,
     );
     expect(html).toContain('重新校准并迁移审校决定');
+    expect(html).toContain('按新校准（5 个锚点）');
     expect(html).toContain(`可迁移`);
     expect(html).toContain(`无对应`);
     expect(html).toContain('确认并一次提交');
